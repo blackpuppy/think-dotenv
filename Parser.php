@@ -2,7 +2,7 @@
 
 namespace Snowair\Dotenv;
 
-class Parser extends \josegonzalez\Dotenv\Parser
+class Parser // extends \josegonzalez\Dotenv\Parser
 {
     public function parse($contents)
     {
@@ -64,5 +64,54 @@ class Parser extends \josegonzalez\Dotenv\Parser
         }
 
         return $environment;
+    }
+
+    public function processUnquotedValue($value)
+    {
+        $parts = explode(' ', trim($value), 2);
+        $value = $parts[0];
+        if ($value === 'true') {
+            $value = true;
+        } elseif ($value === 'false') {
+            $value = false;
+        } elseif ($value === 'null') {
+            $value = null;
+        } elseif (ctype_digit($value)) {
+            $value = (int)$value;
+        }
+
+        return $value;
+    }
+
+    public function processQuotedValue($value, $environment)
+    {
+        if (strpos($value, '\\n') !== false) {
+            $value = str_replace('\\n', "\n", $value);
+
+            $lines = explode("\n", $value);
+            $count = count($lines);
+            $lastLine = explode(' #', $lines[$count - 1], 2);
+            $lines[$count - 1] = $lastLine[0];
+            $value = implode("\n", $lines);
+        }
+
+        if (strpos($value, '$') !== false) {
+            $value = preg_replace_callback(
+                '/\${([a-zA-Z0-9_]+)}/',
+                function ($matchedPatterns) use ($environment) {
+                    if (isset($environment[$matchedPatterns[1]])) {
+                        return $environment[$matchedPatterns[1]];
+                    }
+                    return '{}';
+                },
+                $value
+            );
+        }
+
+        if ($value === "''" || $value === '""') {
+            $value = '';
+        }
+
+        return $value;
     }
 }
