@@ -9,7 +9,7 @@
     }
   ],
   "require": {
-    "josegonzalez/dotenv": "^1.0",
+    "josegonzalez/dotenv": "^3.2",
     "snowair/think-hookagent": ">=0.4"
   },
   "autoload": {
